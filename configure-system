@@ -1,0 +1,30 @@
+#!/bin/sh
+
+set -eux
+
+HOSTNAME=$1
+
+ARCH_CHROOT='arch-chroot /mnt'
+
+# FSTAB Config
+echo -e '# \n# /etc/fstab: static file system information\n#\n# <file system>	<dir>	<type>	<options>	<dump>	<pass>\n' > /mnt/etc/fstab
+genfstab -U /mnt >> /mnt/etc/fstab
+
+# Time Zone and Hardware Clock
+[ -f /mnt/etc/localtime ] || ln -s /usr/share/zoneinfo/America/Los_Angeles /mnt/etc/localtime
+$ARCH_CHROOT hwclock --systohc
+
+# Locale
+sed -i -e's/^#\(en_US.UTF-8\)/\1/' /mnt/etc/locale.gen
+echo 'LANG=en_US.UTF-8' > /mnt/etc/locale.conf
+$ARCH_CHROOT locale-gen
+
+# Hostname
+echo $HOSTNAME > /mnt/etc/hostname
+
+# Configure mkinitcpio to load lvm modules necessary for decrypting the disk
+egrep '^HOOK.*encrypt lvm' /mnt/etc/mkinitcpio.conf || sed -i -r -e's/(^HOOKS=.*)(filesystems)/\1encrypt lvm2 \2/' /mnt/etc/mkinitcpio.conf
+$ARCH_CHROOT mkinitcpio -P
+
+# Set root password
+$ARCH_CHROOT passwd

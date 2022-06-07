@@ -1,0 +1,51 @@
+#!/bin/sh
+set -eux
+
+DISK="$1"
+
+ROOT_SIZE="$2"G
+SWAP_SIZE="$3"G
+
+#LINUX_FS=8300
+EFI_FS=EF00
+LINUX_LVM=8e00
+ALIGNMENT=4096
+
+# Adjust partition naming for nvme drives
+if echo "$DISK" | grep -q 'nvme' 2>/dev/null
+then
+    BOOT_PARTITION=${DISK}p1
+    LVM_PARTITION=${DISK}p2
+else
+    BOOT_PARTITION=${DISK}1
+    LVM_PARTITION=${DISK}2
+fi
+
+sgdisk -Z "$DISK" #zap disk
+sgdisk -g "$DISK" #gpt setup
+sgdisk -a"$ALIGNMENT" -n0:0:+512M -t"0:$EFI_FS" -c0:"boot" "$DISK"
+sgdisk -a"$ALIGNMENT" -n0:0:0 -t"0:$LINUX_LVM" -c0:"lvm" "$DISK"
+sgdisk -p "$DISK"
+
+cryptsetup luksFormat "$LVM_PARTITION"
+cryptsetup luksOpen "$LVM_PARTITION" lvm
+
+pvcreate /dev/mapper/lvm
+vgcreate brain /dev/mapper/lvm
+lvcreate -L "$SWAP_SIZE" brain -n swap
+lvcreate -L "$ROOT_SIZE" brain -n root
+lvcreate -l 100%FREE brain -n home
+
+mkfs.ext4 /dev/mapper/brain-root
+mkfs.ext4 /dev/mapper/brain-home
+mkswap /dev/mapper/brain-swap
+
+mount /dev/mapper/brain-root /mnt
+mkdir /mnt/home
+mount /dev/mapper/brain-home /mnt/home
+swapon /dev/mapper/brain-swap
+
+#mkfs.ext4 "$BOOT_PARTITION"  # if LINUX_FS
+mkfs.fat -F32 "$BOOT_PARTITION"
+mkdir /mnt/boot
+mount "$BOOT_PARTITION" /mnt/boot

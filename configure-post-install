@@ -1,0 +1,20 @@
+#!/bin/sh
+
+set -eux
+
+ARCH_CHROOT='arch-chroot /mnt'
+
+# Grant sudo to sudo group
+$ARCH_CHROOT groupadd sudo
+sed -i -r -e's/^# (%sudo\s+ALL=)/\1/' /mnt/etc/sudoers
+
+# Allow iwd to manage DHCP
+mkdir /mnt/etc/iwd
+echo -e '[General]\nEnableNetworkConfiguration=true' > /mnt/etc/iwd/main.conf
+$ARCH_CHROOT systemctl enable iwd.service
+$ARCH_CHROOT systemctl enable systemd-resolved.service
+
+# Change root user shell to zsh
+$ARCH_CHROOT chsh -s /usr/bin/zsh
+
+echo -e 'EDITOR=nvim\nalias vim=nvim\nbindkey -v' > /mnt/root/.zshrc.local

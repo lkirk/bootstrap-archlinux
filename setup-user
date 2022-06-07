@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -eux
+
+USER_NAME="$1"
+USER_SHELL="$2"
+
+ARCH_CHROOT='arch-chroot /mnt'
+
+$ARCH_CHROOT useradd --create-home --shell "$USER_SHELL" "$USER_NAME"
+$ARCH_CHROOT passwd "$USER_NAME"
+$ARCH_CHROOT usermod -a -G sudo "$USER_NAME"
