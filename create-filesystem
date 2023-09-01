@@ -3,8 +3,8 @@ set -eux
 
 DISK="$1"
 
-ROOT_SIZE="$2"G
-SWAP_SIZE="$3"G
+ROOT_SIZE="$2"
+SWAP_SIZE="$3"
 
 #LINUX_FS=8300
 EFI_FS=EF00

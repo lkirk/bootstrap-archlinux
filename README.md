@@ -17,10 +17,9 @@ cd boostrap-archlinux-main
 
 ```
 INSTALL_DISK=/dev/sda \
-ROOT_SIZE=60 \
-SWAP_SIZE=16 \
+ROOT_SIZE=60G \
+SWAP_SIZE=16G \
 HOSTNAME=something \
-GRUB_PARTITION=/dev/sda2 \
 USER_NAME=joey \
 USER_SHELL=/usr/bin/zsh \
 ./do-all
