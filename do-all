@@ -1,4 +1,10 @@
 #!/bin/sh
+
+if ! ping -c 1 -q www.google.com >/dev/null 2>&1; then
+    echo "no internet connection"
+    exit 1
+fi
+
 set -eux
 ./create-filesystem "${INSTALL_DISK}" "${ROOT_SIZE}" "${SWAP_SIZE}"
 ./install-packages
