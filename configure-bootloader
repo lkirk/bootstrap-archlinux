@@ -2,11 +2,20 @@
 
 set -eux
 
-ROOT_DEVICE="$1"
-
-CRYPTDEVICE_ID="cryptdevice=$(blkid | awk '$1 == "'$ROOT_DEVICE':"{print $2}' | sed -e's/\"//g'):lvm"
+CRYPTDEVICE_ID="cryptdevice=$(blkid | awk '$4=="PARTLABEL=\"lvm\""{print $2}'| sed -e's/\"//g'):lvm"
 ROOT_ID="root=$(blkid | awk '$1 == "/dev/mapper/brain-root:"{print $2}' | sed -e's/\"//g')"
 
-sed -i -r -e's/(GRUB_PRELOAD_MODULES=")(.*)(")/\1\2 lvm\3/' -e's/(GRUB_CMDLINE_LINUX_DEFAULT=")(.*)/\1'"$CRYPTDEVICE_ID $ROOT_ID"' \2/' /mnt/etc/default/grub
-arch-chroot /mnt grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
-arch-chroot /mnt grub-mkconfig -o /boot/grub/grub.cfg
+if [ -z "$CRYPTDEVICE_ID" ]; then
+    echo "could not find CRYPTDEVICE_ID"
+    exit 1
+fi
+
+if [ -z "$ROOT_ID" ]; then
+    echo "could not find ROOT_ID"
+    exit 1
+fi
+
+bootctl --path=/mnt/boot install
+
+echo -e "default arch\ntimeout 2\neditor 0" > /mnt/boot/loader/loader.conf
+echo -e "title Arch Linux\nlinux /vmlinuz-linux\ninitrd /initramfs-linux.img\noptions $CRYPTDEVICE_ID $ROOT_ID quiet rw" > /mnt/boot/loader/entries/arch.conf

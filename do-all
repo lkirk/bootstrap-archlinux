@@ -4,5 +4,5 @@ set -eux
 ./install-packages
 ./configure-system "${HOSTNAME}"
 ./configure-post-install
-./configure-bootloader "${BOOT_PARTITION}"
+./configure-bootloader
 ./setup-user "${USER_NAME}" "${USER_SHELL}"

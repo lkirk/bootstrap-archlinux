@@ -2,4 +2,4 @@
 
 set -eux
 
-pacstrap /mnt base base-devel linux linux-firmware lvm2 grub efibootmgr iwd man zsh grml-zsh-config git curl wget neovim
+pacstrap /mnt base base-devel linux linux-firmware lvm2 efibootmgr iwd man zsh grml-zsh-config git curl wget neovim
